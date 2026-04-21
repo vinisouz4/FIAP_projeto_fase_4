@@ -1,0 +1,15 @@
+yfinance
+pandas
+numpy
+matplotlib
+scikit-learn
+mlflow
+tensorflow
+keras
+requests
+fastapi
+fastapi[standard]
+uvicorn
+colorlog
+python-jose[cryptography]
+passlib[bcrypt]
