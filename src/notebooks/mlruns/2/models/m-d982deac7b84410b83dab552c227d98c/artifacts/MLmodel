@@ -1,0 +1,22 @@
+artifact_path: /Users/viniciussouza/Codes/FIAP/FIAP_projeto_fase_4/src/notebooks/mlruns/2/models/m-d982deac7b84410b83dab552c227d98c/artifacts
+flavors:
+  python_function:
+    data: data
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.tensorflow
+    python_version: 3.10.9
+  tensorflow:
+    code: null
+    data: data
+    keras_version: 2.21.0
+    model_type: keras
+    save_format: tf
+mlflow_version: 3.11.1
+model_id: m-d982deac7b84410b83dab552c227d98c
+model_size_bytes: 91279
+model_uuid: m-d982deac7b84410b83dab552c227d98c
+prompts: null
+run_id: 6e684240059f4b6caad470e758f7791a
+utc_time_created: '2026-04-21 20:48:03.166201'

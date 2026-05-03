@@ -1,0 +1,35 @@
+{
+  "model_version": "2.0.0",
+  "ticker": "AAPL",
+  "window_size": 30,
+  "features": [
+    "RETURN",
+    "RETURN_2",
+    "RETURN_5",
+    "LOG_RETURN",
+    "HIGH_LOW_PCT",
+    "OPEN_CLOSE",
+    "VOLATILITY_5",
+    "VOLATILITY_20",
+    "VOL_CHANGE",
+    "MOMENTUM_5",
+    "MOMENTUM_10",
+    "RSI",
+    "MACD_HIST"
+  ],
+  "n_features": 13,
+  "target": "return_t+1",
+  "normalization": "per_window_zscore",
+  "confidence_threshold": 0.003,
+  "train_metrics": {
+    "MAE_pct": 1.2283,
+    "RMSE_pct": 1.7402,
+    "MAPE": 10306.3751,
+    "DA": 5315.8326,
+    "DA_naive": 5155.9934,
+    "DA_conf": 5315.8326,
+    "delta_DA": 159.8392
+  },
+  "architecture": "BiLSTM 64->32 + Dense 16",
+  "framework": "TensorFlow 2.21.0"
+}

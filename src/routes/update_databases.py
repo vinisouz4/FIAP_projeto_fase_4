@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Optional, List
 
 from src.services.database_services import DatabaseService
 from src.services.auth_services import current_user
