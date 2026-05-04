@@ -3,6 +3,7 @@ from src.routes.auth_routes import router_auth
 from src.routes.update_databases import router_update
 from src.routes.health_routes import router as router_health
 from src.routes.loader_model import router as router_loader_model
+from src.routes.predict_routes import router as router_predict
 
 """
 Arquivo responsável pela organização das rotas da API
@@ -27,7 +28,13 @@ def create_app():
     app.include_router(
         router_loader_model,
         prefix="/api",
-        tags=["Model Loader"],
+        tags=["Modelo"],
+    )
+
+    app.include_router(
+        router_predict,
+        prefix="/api",
+        tags=["Modelo"],
     )
 
     app.include_router(

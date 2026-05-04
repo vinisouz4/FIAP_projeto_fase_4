@@ -1,87 +1,80 @@
 """
-services/predictor.py
-
-Lógica de inferência: prepara o input, roda o modelo e retorna previsões.
-Suporta previsão de múltiplos passos (autoregressive / recursive forecasting).
+Rota de predição — /predict
+Compatível com o modelo BiLSTM treinado em train_models.ipynb
 """
 
-import time
-from typing import List, Optional
 
 import numpy as np
+import pandas as pd
 
-from src.services import model_loader
-from src.services.metrics_service import compute_metrics
-
-
-def _window_size() -> int:
-    """Retorna o número de timesteps esperado pelo modelo."""
-    model = model_loader.get_model()
-    shape = model.input_shape  # ex: (None, 10, 1) para LSTM univariado
-    if len(shape) == 3:
-        return shape[1]
-    return int(shape[-1])
+from src.models.predict_models import DailyOHLCV
 
 
-def _prepare_input(prices: List[float]) -> np.ndarray:
+
+
+# ---------------------------------------------------------------------------
+# Helpers — espelham exatamente o pré-processamento do notebook
+# ---------------------------------------------------------------------------
+
+def _build_features(history: list[DailyOHLCV]) -> np.ndarray:
     """
-    Ajusta a série para o tamanho da janela do modelo.
-    Retorna array com shape (1, timesteps, 1).
+    Recria as mesmas 13 features do notebook a partir do histórico OHLCV.
+    Retorna array (n_valid_rows, 13) sem NaNs.
     """
-    window = _window_size()
-    arr = np.array(prices, dtype=np.float32)
 
-    # Trunca ou faz padding à esquerda (edge padding)
-    if len(arr) > window:
-        arr = arr[-window:]
-    elif len(arr) < window:
-        arr = np.pad(arr, (window - len(arr), 0), mode="edge")
+    df = pd.DataFrame([d.model_dump() for d in history])
 
-    return arr.reshape(1, window, 1)
+    df["RETURN"] = df["close"].pct_change()
+    df["RETURN_2"] = df["close"].pct_change(2)
+    df["RETURN_5"] = df["close"].pct_change(5)
+    df["LOG_RETURN"] = np.log(df["close"] / df["close"].shift(1))
+    df["HIGH_LOW_PCT"] = (df["high"] - df["low"]) / df["close"]
+    df["OPEN_CLOSE"] = (df["close"] - df["open"]) / df["open"]
+    df["VOLATILITY_5"] = df["RETURN"].rolling(5).std()
+    df["VOLATILITY_20"] = df["RETURN"].rolling(20).std()
+    df["VOL_CHANGE"] = df["volume"].pct_change()
+    df["MOMENTUM_5"] = df["RETURN"].rolling(5).sum()
+    df["MOMENTUM_10"] = df["RETURN"].rolling(10).sum()
+
+    delta = df["close"].diff()
+    gain  = delta.clip(lower=0).rolling(14).mean()
+    loss  = -delta.clip(upper=0).rolling(14).mean()
+    df["RSI"] = 100 - (100 / (1 + gain / (loss + 1e-10)))
+
+    df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
+    df["MACD_SIGNAL"] = df["MACD"].ewm(span=9).mean()
+    df["MACD_HIST"] = df["MACD"] - df["MACD_SIGNAL"]
+
+    features = [
+        "RETURN", "RETURN_2", "RETURN_5", "LOG_RETURN",
+        "HIGH_LOW_PCT", "OPEN_CLOSE",
+        "VOLATILITY_5", "VOLATILITY_20",
+        "VOL_CHANGE", "MOMENTUM_5", "MOMENTUM_10",
+        "RSI", "MACD_HIST",
+    ]
+    df = df[features].dropna().reset_index(drop=True)
+    return df.values.astype(np.float32)
 
 
-def run_prediction(
-    prices: List[float],
-    steps: int = 1,
-    actual_prices: Optional[List[float]] = None,
-) -> dict:
+def _window_normalize(window: np.ndarray) -> np.ndarray:
+    """Z-score por janela — idêntico ao create_sequences_window_norm do notebook."""
+    std = window.std(axis=0)
+    std[std < 1e-8] = 1.0
+    return (window - window.mean(axis=0)) / std
+
+
+def _build_input(feature_matrix: np.ndarray, window_size: int) -> np.ndarray:
     """
-    Executa a previsão para `steps` passos futuros de forma autoregressiva:
-    cada previsão é adicionada à janela para alimentar o próximo passo.
-
-    Parâmetros
-    ----------
-    prices: série histórica de preços (janela de entrada)
-    steps: quantos períodos futuros prever
-    actual_prices: ground-truth opcional para calcular métricas
-
-    Retorna
-    -------
-    dict com predictions, steps, inference_time_ms e metrics (opcional)
+    Pega os últimos `window_size` passos, normaliza e retorna
+    o tensor (1, window_size, n_features) pronto para inferência.
     """
-    model = model_loader.get_model()
-    buffer = list(prices)
-    predictions: List[float] = []
+    if len(feature_matrix) < window_size:
+        raise ValueError(
+            f"Dados insuficientes após cálculo de features. "
+            f"Necessário >= {window_size} linhas válidas, obteve {len(feature_matrix)}."
+        )
+    window = feature_matrix[-window_size:].copy()
+    window_norm = _window_normalize(window)
+    return window_norm[np.newaxis, ...]  # (1, 30, 13)
 
-    t0 = time.perf_counter()
 
-    for _ in range(steps):
-        x = _prepare_input(buffer)
-        raw = model.predict(x, verbose=0)        # (1, 1) ou (1,)
-        pred = round(float(raw.flatten()[0]), 6)
-        predictions.append(pred)
-        buffer.append(pred)                       # alimenta próximo passo
-
-    elapsed_ms = round((time.perf_counter() - t0) * 1000, 3)
-
-    result: dict = {
-        "predictions": predictions,
-        "steps": steps,
-        "inference_time_ms": elapsed_ms,
-        "metrics": None,
-    }
-
-    if actual_prices:
-        result["metrics"] = compute_metrics(actual_prices, predictions)
-
-    return result
