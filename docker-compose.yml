@@ -1,6 +1,6 @@
 services:
 
-  # ── FastAPI (sua aplicação) ───────────────────────────────────────────────
+  # ── FastAPI ───────────────────────────────────────────────
   api:
     build: .
     container_name: fiap_api
