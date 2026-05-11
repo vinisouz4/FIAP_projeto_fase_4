@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: fiap-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: MODEL_ARTIFACTS_PATH
+        value: src/model_artifacts
+      - key: PORT
+        value: 8000
