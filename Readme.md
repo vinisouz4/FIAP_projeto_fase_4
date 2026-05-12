@@ -25,7 +25,10 @@ Este projeto implementa uma pipeline completa de Machine Learning para previsão
 - **Treinamento**: modelo BiLSTM treinado com dados históricos da AAPL (2002–2026)
 - **API**: FastAPI com autenticação JWT, rota de predição e métricas
 - **Monitoramento**: Prometheus + Grafana para métricas de infraestrutura, MLflow para rastreamento do modelo
-- **Deploy**: containerizado com Docker, deployado no Railway
+- **Deploy**: containerizado com Docker, deployado no Render
+
+## Link Render:
+- https://fiap-projeto-fase-4.onrender.com
 
 ---
 
@@ -139,7 +142,7 @@ GET /metrics
 ### Instalação
 
 ```bash
-git clone https://github.com/seu-usuario/FIAP_projeto_fase_4.git
+git clone https://github.com/vinisouz4/FIAP_projeto_fase_4.git
 cd FIAP_projeto_fase_4
 
 pip install -r requirements.txt
@@ -193,7 +196,7 @@ docker run -p 8000:8000 fiap-api
 
 ### Prometheus + Grafana
 
-O projeto inclui um dashboard Grafana pré-configurado (`grafana_dashboard.json`) com:
+O projeto inclui um dashboard Grafana pré-configurado (`grafana_dashboard_fixed.json`) com:
 
 - Status do modelo (ONLINE/OFFLINE)
 - Total de requisições e taxa req/s
@@ -206,7 +209,7 @@ O projeto inclui um dashboard Grafana pré-configurado (`grafana_dashboard.json`
 **Importar dashboard:**
 1. Acesse `http://localhost:3000`
 2. Dashboards → Import → Upload JSON
-3. Selecione `grafana_dashboard.json`
+3. Selecione `grafana_dashboard_fixed.json`
 
 ### MLflow
 
@@ -224,40 +227,57 @@ Experimento: `production_AAPL` — loga métricas a cada 50 predições ou 5 min
 
 ```
 FIAP_projeto_fase_4/
-├── run.py                          # entrypoint da aplicação
+├── run.py                              # entrypoint da aplicação
 ├── Dockerfile
 ├── docker-compose.yml
+├── render.yaml                         # configuração de deploy no Render
 ├── requirements.txt
-├── prometheus.yml                  
+├── prometheus.yml
+├── grafana_dashboard_fixed.json        # dashboard Grafana pré-configurado
+├── historico_acao_teste.txt            # dados de teste
+├── .env
+├── .gitignore
 ├── grafana/
 │   └── provisioning/
 │       └── datasources/
 │           └── prometheus.yml
 ├── src/
 │   ├── api/
-│   │   └── app.py                 
-│   ├── routes/
-│   │   ├── auth_routes.py
-│   │   ├── predict_routes.py
-│   │   ├── metrics_routes.py
-│   │   ├── health_routes.py
-│   │   └── loader_model.py
-│   ├── services/
-│   │   ├── model_loader_services.py
-│   │   ├── predict_service.py
-│   │   └── auth_services.py
-│   ├── models/
-│   │   └── predict_models.py
-│   ├── monitoring/
-│   │   ├── metrics_middleware.py   # Prometheus middleware
-│   │   └── model_monitor.py        # MLflow monitor
+│   │   └── app.py
+│   ├── core/
+│   │   └── configs.py
+│   ├── database/
+│   ├── log/
+│   │   └── logs.py
 │   ├── model_artifacts/
 │   │   ├── model.keras
 │   │   └── inference_metadata.json
-│   └── log/
-│       └── logs.py
-└── notebooks/
-    └── train_models.ipynb
+│   ├── models/
+│   │   ├── auth_models.py
+│   │   ├── health_models.py
+│   │   ├── metrics_models.py
+│   │   └── predict_models.py
+│   ├── monitoring/
+│   │   ├── metrics_middleware.py       # Prometheus middleware
+│   │   └── model_monitor.py           # MLflow monitor
+│   ├── routes/
+│   │   ├── auth_routes.py
+│   │   ├── health_routes.py
+│   │   ├── loader_model.py
+│   │   ├── metrics_routes.py
+│   │   ├── predict_routes.py
+│   │   └── update_databases.py
+│   ├── services/
+│   │   ├── auth_services.py
+│   │   ├── database_services.py
+│   │   ├── metrics_service.py
+│   │   ├── model_loader_services.py
+│   │   └── predict_service.py
+│   └── utils/
+├── notebooks/
+│   ├── manipulation.ipynb
+│   ├── train_models.ipynb
+│   └── mlflow.db
 ```
 
 ---
@@ -272,5 +292,5 @@ FIAP_projeto_fase_4/
 | Monitoramento | Prometheus + Grafana |
 | Rastreamento ML | MLflow |
 | Containerização | Docker + Docker Compose |
-| Deploy | Railway |
+| Deploy | Render |
 | Linguagem | Python 3.10 |
