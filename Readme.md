@@ -155,6 +155,10 @@ Crie um `.env` na raiz:
 ```env
 MODEL_ARTIFACTS_PATH=src/model_artifacts
 MLFLOW_TRACKING_URI=http://localhost:5000
+SECRET_KEY = "a9f3c7e4b1d8f6a2c9e5b7d3f1a8c6e9d4b2f7c1a3e8d6b9c5f2a7e1d3c8b4f"
+ALGORITHM = "HS256"
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin"
 ```
 
 ### Iniciar a API
